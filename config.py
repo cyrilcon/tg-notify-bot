@@ -5,6 +5,29 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from sqlalchemy.engine.url import URL
 
 
+class RunConfig(BaseModel):
+    host: str = "0.0.0.0"
+    port: int = 8000
+    reload: bool = False
+
+
+class ApiV1Prefix(BaseModel):
+    prefix: str = "/v1"
+
+
+class ApiTags(BaseModel):
+    notification: str = "Notification"
+
+
+class ApiConfig(BaseModel):
+    prefix: str = "/api"
+    access_token: str = "access_token"
+
+    run: RunConfig = RunConfig()
+    v1: ApiV1Prefix = ApiV1Prefix()
+    tags: ApiTags = ApiTags()
+
+
 class DatabaseConfig(BaseModel):
     host: str = "localhost"
     port: int = 5432
@@ -40,6 +63,10 @@ class DatabaseConfig(BaseModel):
     }
 
 
+class TgBotConfig(BaseModel):
+    token: str
+
+
 class Config(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env.template", ".env"),
@@ -48,7 +75,9 @@ class Config(BaseSettings):
         extra="ignore",
     )
 
+    api: ApiConfig = ApiConfig()
     db: Optional[DatabaseConfig] = None
+    tg_bot: Optional[TgBotConfig] = None
 
 
 config = Config()
