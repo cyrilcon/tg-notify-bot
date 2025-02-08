@@ -79,5 +79,7 @@ class Config(BaseSettings):
     db: Optional[DatabaseConfig] = None
     tg_bot: Optional[TgBotConfig] = None
 
+    test_chat_id: Optional[int] = None
+
 
 config = Config()
