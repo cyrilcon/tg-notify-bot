@@ -33,7 +33,7 @@ class DatabaseConfig(BaseModel):
     port: int = 5432
     user: str = "postgres"
     password: str
-    database: str
+    database: str = "notification"
     echo: bool = False
     echo_pool: bool = False
     pool_size: int = 50
