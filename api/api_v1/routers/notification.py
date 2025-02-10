@@ -15,7 +15,7 @@ api_key_header = APIKeyHeader(name="Authorization")
 
 
 @router.post(
-    "/",
+    "/notify",
     response_model=NotificationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Send a notification",
