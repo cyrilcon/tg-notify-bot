@@ -4,7 +4,7 @@ from httpx import AsyncClient
 from api.api_v1.services import generate_token
 from config import config
 
-PREFIX = config.api.prefix + config.api.v1.prefix + "/"
+PREFIX = config.api.prefix + config.api.v1.prefix + "/notify"
 
 
 class TestSuccess:
