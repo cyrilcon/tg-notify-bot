@@ -7,7 +7,7 @@ from api.api_v1.models import NotificationResponse, NotificationRequest
 from api.api_v1.services import generate_token
 from config import config
 from database import session_manager
-from tg_bot.services import send_message
+from tg_bot.messaging import send_message
 
 router = APIRouter(tags=[config.api.tags.notification])
 
