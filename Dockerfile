@@ -1,18 +1,16 @@
 FROM python:3.12-slim
 
-# Set Poetry
-RUN pip install poetry
+# Set uv
+RUN pip install uv
 
 # Set the working directory
 WORKDIR /usr/src/app/tg-notify-bot
 
 # Copy the dependency files
-COPY poetry.lock pyproject.toml ./
+COPY pyproject.toml uv.lock* ./
 
 # Install dependencies
-RUN poetry config virtualenvs.create false \
-    && poetry install --no-interaction --no-ansi --no-root \
-    && rm -rf $(poetry env info -p)/.cache/pip
+RUN uv pip install . --system
 
 # Copy the project files
 COPY . .
