@@ -20,9 +20,9 @@ class TestSuccess:
         response = await client.post(url=PREFIX, json=data, headers=headers)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["error"] is None
-        assert response.json()["successfully"] is True
-        assert response.json()["created_at"] is not None
+        assert response.json()["success"] is True
+        assert response.json()["errorMessage"] is None
+        assert response.json()["createdAt"] is not None
 
     async def test_send_message_with_file(self, client: AsyncClient, data):
         """Sending a message with a file."""
@@ -32,9 +32,9 @@ class TestSuccess:
         response = await client.post(url=PREFIX, json=data, headers=headers)
 
         assert response.status_code == status.HTTP_201_CREATED
-        assert response.json()["successfully"] is True
-        assert response.json()["error"] is None
-        assert response.json()["created_at"] is not None
+        assert response.json()["success"] is True
+        assert response.json()["errorMessage"] is None
+        assert response.json()["createdAt"] is not None
 
 
 class TestAdminsFailure:
@@ -61,7 +61,7 @@ class TestAdminsFailure:
         token = generate_token()
         headers = {"Authorization": token}
 
-        del data["chat_id"]
+        del data["chatID"]
 
         response = await client.post(url=PREFIX, json=data, headers=headers)
 
@@ -83,7 +83,7 @@ class TestAdminsFailure:
         token = generate_token()
         headers = {"Authorization": token}
 
-        data["chat_id"] = "invalid_chat_id"
+        data["chatID"] = "invalid_chat_id"
 
         response = await client.post(url=PREFIX, json=data, headers=headers)
 

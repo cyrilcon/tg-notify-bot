@@ -29,11 +29,11 @@ async def send_notification(
     """
     Send a notification:
 
-    - `id` (str): The ID of the chat or channel where the message is to be sent.
-    - `message` (str): The body of a message with Markdown_v2 markup.
-    - `documents` (list of Document objects | null)
-        - `buffer` (byte buffer): Attached document.
-        - `name` (str): Document Name.
+    - `chatID` (integer): The ID of the chat or channel where the message is to be sent.
+    - `message` (string): The body of a message with Markdown_v2 markup.
+    - `documents` (array of Document objects | null)
+        - `buffer` (string): Attached document.
+        - `name` (string): Document name.
     """
     generated_token = generate_token()
     if token != generated_token:
@@ -54,13 +54,13 @@ async def send_notification(
         )
 
     success, error = await send_message(
-        notification_in.chat_id,
+        notification_in.chatID,
         notification_in.message,
         notification_in.documents,
     )
 
     return NotificationResponse(
-        successfully=success,
-        error=error,
-        created_at=notification.created_at,
+        success=success,
+        errorMessage=error,
+        createdAt=notification.created_at,
     )

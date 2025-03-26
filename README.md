@@ -32,7 +32,7 @@ errors, with support for file attachments such as log files.
 - **Alembic**: Tool for managing database migrations.
 - **Pytest**: Framework for writing and running tests.
 - **Docker**: Tool for containerizing the application.
-- **Poetry**: Tool for dependency and package management.
+- **UV**: Tool for dependency and package management.
 
 ## System Architecture
 
@@ -172,7 +172,7 @@ POST /api/v1/notify
 
 | Field       | Type    | Description                                       |
 |-------------|---------|---------------------------------------------------|
-| `chat_id`   | integer | Chat or channel ID where the message will be sent |
+| `chatID`    | integer | Chat or channel ID where the message will be sent |
 | `message`   | string  | Message text in Markdown formatting               |
 | `documents` | array   | *Optional*. List of attached documents            |
 
@@ -187,7 +187,7 @@ POST /api/v1/notify
 
 ```json
 {
-  "chat_id": 123456789,
+  "chatID": 123456789,
   "message": "Hello, this is a message with *markdown* formatting.",
   "documents": [
     {
@@ -206,17 +206,17 @@ POST /api/v1/notify
 
 | Field          | Type    | Description                                     |
 |----------------|---------|-------------------------------------------------|
-| `successfully` | boolean | `true` if the message was sent successfully     |
-| `error`        | string  | Error message or `null` if successful           |
-| `created_at`   | string  | Time of notification sending in ISO 8601 format |
+| `success`      | boolean | `true` if the message was sent successfully     |
+| `errorMessage` | string  | Error message or `null` if successful           |
+| `createdAt`    | string  | Time of notification sending in ISO 8601 format |
 
 **Example Successful Response:**
 
 ```json
 {
-  "successfully": true,
-  "error": null,
-  "created_at": "2024-06-06T12:00:02Z"
+  "success": true,
+  "errorMessage": null,
+  "createdAt": "2024-06-06T12:00:02Z"
 }
 ```
 
@@ -224,9 +224,9 @@ POST /api/v1/notify
 
 ```json
 {
-  "successfully": false,
-  "error": "Error message explaining what went wrong",
-  "created_at": "2024-06-06T12:00:02Z"
+  "success": false,
+  "errorMessage": "Error message explaining what went wrong",
+  "createdAt": "2024-06-06T12:00:02Z"
 }
 ```
 
@@ -264,9 +264,9 @@ pytest
 - Errors in sending:
     - Sending without a token.
     - Sending with an invalid token.
-    - Sending without `chat_id`.
+    - Sending without `chatID`.
     - Sending without `message`.
-    - Sending with an incorrect `chat_id`.
+    - Sending with an incorrect `chatID`.
 
 ## Running the Application with Docker
 

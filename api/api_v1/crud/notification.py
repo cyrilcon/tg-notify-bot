@@ -20,7 +20,7 @@ async def create_notification(
     """
     try:
         notification = Notification(
-            chat_id=notification_in.chat_id,
+            chat_id=notification_in.chatID,
             message=notification_in.message,
             created_at=datetime.now(timezone.utc),
         )

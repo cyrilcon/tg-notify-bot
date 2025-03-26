@@ -32,7 +32,7 @@ async def data(file_data):
     Fixture to return data.
     """
     data = {
-        "chat_id": CHAT_ID,
+        "chatID": CHAT_ID,
         "message": MESSAGE,
         "documents": [
             file_data,
