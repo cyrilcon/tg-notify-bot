@@ -7,7 +7,7 @@ from api.api_v1.models import NotificationResponse, NotificationRequest
 from api.api_v1.services import generate_token
 from config import config
 from database import session_manager
-from tg_bot.messaging import send_message
+from tg_bot.bot import BotService
 
 router = APIRouter(tags=[config.api.tags.notification])
 
@@ -53,7 +53,7 @@ async def send_notification(
             detail=f"Failed to create notification in the database: {error}",
         )
 
-    success, error = await send_message(
+    success, error = await BotService.send_message(
         notification_in.chatID,
         notification_in.message,
         notification_in.documents,
