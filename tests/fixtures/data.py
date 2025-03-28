@@ -6,9 +6,9 @@ import pytest
 from config import config
 
 CHAT_ID = config.test_chat_id
-
 TEST_FILE_PATH = Path("tests/document.txt")
 MESSAGE = TEST_FILE_PATH.read_text(encoding="utf-8")
+BUTTON_URL = "https://example.com"
 
 
 @pytest.fixture(scope="function")
@@ -27,15 +27,37 @@ def file_data():
 
 
 @pytest.fixture(scope="function")
-async def data(file_data):
-    """
-    Fixture to return data.
-    """
-    data = {
+async def base_data():
+    """Base fixture for testing data."""
+    return {
         "chatID": CHAT_ID,
         "message": MESSAGE,
-        "documents": [
-            file_data,
-        ],
     }
-    return data
+
+
+@pytest.fixture(scope="function")
+async def data_with_button(base_data):
+    """Data fixture with an inline button."""
+    return {
+        **base_data,
+        "buttonUrl": BUTTON_URL,
+    }
+
+
+@pytest.fixture(scope="function")
+async def data_with_file(base_data, file_data):
+    """Data fixture with a file."""
+    return {
+        **base_data,
+        "documents": [file_data],
+    }
+
+
+@pytest.fixture(scope="function")
+async def data_with_button_and_file(base_data, file_data):
+    """Data fixture with a file and an inline button."""
+    return {
+        **base_data,
+        "buttonUrl": BUTTON_URL,
+        "documents": [file_data],
+    }

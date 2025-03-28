@@ -22,6 +22,7 @@ async def create_notification(
         notification = Notification(
             chat_id=notification_in.chatID,
             message=notification_in.message,
+            button_url=notification_in.buttonUrl,
             created_at=datetime.now(timezone.utc),
         )
 

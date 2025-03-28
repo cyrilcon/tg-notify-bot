@@ -29,11 +29,12 @@ async def send_notification(
     """
     Send a notification:
 
-    - `chatID` (integer): The ID of the chat or channel where the message is to be sent.
-    - `message` (string): The body of a message with Markdown_v2 markup.
-    - `documents` (array of Document objects | null)
-        - `buffer` (string): Attached document.
-        - `name` (string): Document name.
+    - `chatID` (Integer): ID of the chat or channel where the message will be sent
+    - `message` (String): Message body in Markdown_v2 format
+    - `buttonUrl` (String | Null): Optional URL for an inline button in the message
+    - `documents` (Array of Document objects | Null)
+        - `buffer` (String): File in Base64 format
+        - `name` (String): Document name
     """
     generated_token = generate_token()
     if token != generated_token:
@@ -54,9 +55,10 @@ async def send_notification(
         )
 
     success, error = await BotService.send_message(
-        notification_in.chatID,
-        notification_in.message,
-        notification_in.documents,
+        chat_id=notification_in.chatID,
+        text=notification_in.message,
+        button_url=notification_in.buttonUrl,
+        files=notification_in.documents,
     )
 
     return NotificationResponse(
