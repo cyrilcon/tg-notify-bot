@@ -32,7 +32,7 @@ errors, with support for file attachments such as log files.
 - **Alembic**: Tool for managing database migrations.
 - **Pytest**: Framework for writing and running tests.
 - **Docker**: Tool for containerizing the application.
-- **Poetry**: Tool for dependency and package management.
+- **UV**: Tool for dependency and package management.
 
 ## System Architecture
 
@@ -42,21 +42,21 @@ errors, with support for file attachments such as log files.
 
 | Parameter           | Description                                                                            | Default value                                    |
 |---------------------|----------------------------------------------------------------------------------------|--------------------------------------------------|
-| `API__ACCESS_TOKEN` | Access token for API interaction.                                                      | **Required**                                     |
+| `API__ACCESS_TOKEN` | Access token for API interaction                                                       | **Required**                                     |
 | `API__RUN__HOST`    | Host on which the API will run. If running in a container, specify the container name. | `tg-notify-bot` (Docker container name)          |
-| `API__RUN__PORT`    | Port on which the API will be available.                                               | `8000`                                           |
-| `API__RUN__RELOAD`  | Server auto-reload flag (`1` – enabled, `0` – disabled).                               | `0`                                              |
+| `API__RUN__PORT`    | Port on which the API will be available                                                | `8000`                                           |
+| `API__RUN__RELOAD`  | Server auto-reload flag (`1` – enabled, `0` – disabled)                                | `0`                                              |
 | `DB__HOST`          | Database host. If PostgreSQL is running in a container, specify the container name.    | `tg-notify-bot-postgres` (Docker container name) |
-| `DB__PORT`          | Port for connecting to the PostgreSQL database.                                        | `5432`                                           |
-| `DB__USER`          | Database username.                                                                     | `postgres`                                       |
-| `DB__PASSWORD`      | Database user password.                                                                | `postgres`                                       |
-| `DB__DATABASE`      | Name of the database used by the application.                                          | `notification`                                   |
-| `DB__ECHO`          | SQL query logging (`1` – enabled, `0` – disabled).                                     | `0`                                              |
-| `DB__ECHO_POOL`     | Connection pool logging (`1` – enabled, `0` – disabled).                               | `0`                                              |
-| `DB__POOL_SIZE`     | Maximum number of connections in the database pool.                                    | `50`                                             |
-| `DB__MAX_OVERFLOW`  | Maximum number of additional connections created when the pool is overloaded.          | `10`                                             |
-| `TG_BOT__TOKEN`     | Telegram bot token used for sending notifications.                                     | **Required**                                     |
-| `TEST_CHAT_ID`      | Chat ID used for test notifications.                                                   | **Required**                                     |
+| `DB__PORT`          | Port for connecting to the PostgreSQL database                                         | `5432`                                           |
+| `DB__USER`          | Database username                                                                      | `postgres`                                       |
+| `DB__PASSWORD`      | Database user password                                                                 | `postgres`                                       |
+| `DB__DATABASE`      | Name of the database used by the application                                           | `notification`                                   |
+| `DB__ECHO`          | SQL query logging (`1` – enabled, `0` – disabled)                                      | `0`                                              |
+| `DB__ECHO_POOL`     | Connection pool logging (`1` – enabled, `0` – disabled)                                | `0`                                              |
+| `DB__POOL_SIZE`     | Maximum number of connections in the database pool                                     | `50`                                             |
+| `DB__MAX_OVERFLOW`  | Maximum number of additional connections created when the pool is overloaded           | `10`                                             |
+| `TG_BOT__TOKEN`     | Telegram bot token used for sending notifications                                      | **Required**                                     |
+| `TEST_CHAT_ID`      | Chat ID used for test notifications                                                    | **Required**                                     |
 
 > [!WARNING]\
 > Before starting the application, create a `.env` file and specify all required variables.
@@ -98,12 +98,13 @@ _"one-to-many"_ relationship.
 
 ### **Table `Notification`**
 
-| Field        | Type                     | Description                    |
-|--------------|--------------------------|--------------------------------|
-| `id`         | integer                  | Unique notification identifier |
-| `chat_id`    | bigint                   | Chat or channel ID             |
-| `message`    | text                     | Message text                   |
-| `created_at` | timestamp with time zone | Notification send time         |
+| Field        | Type                       | Description                                                                                                               |
+|--------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `id`         | `Integer`                  | Unique notification identifier                                                                                            |
+| `chat_id`    | `Bigint`                   | ID of the chat or channel where the message will be sent                                                                  |
+| `message`    | `Text`                     | Message body in [Markdown_v2](https://core.telegram.org/bots/api#markdownv2-style) format                                 |
+| `button_url` | `Text` \| `Null`           | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
+| `created_at` | `Timestamp` with time zone | Time of notification sending in ISO 8601 format                                                                           |
 
 **ORM Model:**
 
@@ -112,6 +113,7 @@ class Notification(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(BIGINT, index=True)
     message: Mapped[str] = mapped_column(Text())
+    button_url: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         server_default=func.now(),
@@ -127,12 +129,12 @@ class Notification(Base, TableNameMixin):
 
 ### **Table `Document`**
 
-| Field             | Type    | Description                       |
-|-------------------|---------|-----------------------------------|
-| `id`              | integer | Unique document identifier        |
-| `notification_id` | integer | ID of the associated notification |
-| `buffer`          | bytea   | Byte buffer of the document       |
-| `name`            | text    | File name                         |
+| Field             | Type      | Description                       |
+|-------------------|-----------|-----------------------------------|
+| `id`              | `Integer` | Unique document identifier        |
+| `notification_id` | `Integer` | ID of the associated notification |
+| `buffer`          | `Bytea`   | File in Base64 format             |
+| `name`            | `Text`    | Document name                     |
 
 **ORM Model:**
 
@@ -164,31 +166,33 @@ POST /api/v1/notify
 
 ### **Request Headers:**
 
-| Header        | Type   | Description |
-|---------------|--------|-------------|
-| Authorization | string | API key     |
+| Header        | Type     | Description |
+|---------------|----------|-------------|
+| Authorization | `String` | API key     |
 
 ### **Request Parameters:**
 
-| Field       | Type    | Description                                       |
-|-------------|---------|---------------------------------------------------|
-| `chat_id`   | integer | Chat or channel ID where the message will be sent |
-| `message`   | string  | Message text in Markdown formatting               |
-| `documents` | array   | *Optional*. List of attached documents            |
+| Field       | Type               | Description                                                                                                               |
+|-------------|--------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `chatID`    | `Integer`          | ID of the chat or channel where the message will be sent                                                                  |
+| `message`   | `String`           | Message body in [Markdown_v2](https://core.telegram.org/bots/api#markdownv2-style) format                                 |
+| `buttonUrl` | `String` \| `Null` | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
+| `documents` | `Array` \| `Null`  | _(Optional)_ List of attached documents                                                                                   |
 
 **Description of `document` object:**
 
-| Field    | Type   | Description           |
-|----------|--------|-----------------------|
-| `buffer` | string | File in Base64 format |
-| `name`   | string | Document name         |
+| Field    | Type     | Description           |
+|----------|----------|-----------------------|
+| `buffer` | `String` | File in Base64 format |
+| `name`   | `String` | Document name         |
 
 ### **Example Request:**
 
 ```json
 {
-  "chat_id": 123456789,
+  "chatID": 123456789,
   "message": "Hello, this is a message with *markdown* formatting.",
+  "buttonUrl": "https://example.com",
   "documents": [
     {
       "buffer": "SGVsbG8gd29ybGQ=",
@@ -204,19 +208,19 @@ POST /api/v1/notify
 
 ### **Response:**
 
-| Field          | Type    | Description                                     |
-|----------------|---------|-------------------------------------------------|
-| `successfully` | boolean | `true` if the message was sent successfully     |
-| `error`        | string  | Error message or `null` if successful           |
-| `created_at`   | string  | Time of notification sending in ISO 8601 format |
+| Field          | Type                | Description                                             |
+|----------------|---------------------|---------------------------------------------------------|
+| `success`      | `Boolean`           | `true` if the message was sent successfully             |
+| `errorMessage` | `String`  \| `Null` | Error message if something went wrong, otherwise `null` |
+| `createdAt`    | `String`            | Time of notification sending in ISO 8601 format         |
 
 **Example Successful Response:**
 
 ```json
 {
-  "successfully": true,
-  "error": null,
-  "created_at": "2024-06-06T12:00:02Z"
+  "success": true,
+  "errorMessage": null,
+  "createdAt": "2024-06-06T12:00:02Z"
 }
 ```
 
@@ -224,9 +228,9 @@ POST /api/v1/notify
 
 ```json
 {
-  "successfully": false,
-  "error": "Error message explaining what went wrong",
-  "created_at": "2024-06-06T12:00:02Z"
+  "success": false,
+  "errorMessage": "Error message explaining what went wrong",
+  "createdAt": "2024-06-06T12:00:02Z"
 }
 ```
 
@@ -243,9 +247,8 @@ POST /api/v1/notify
 
 The project uses the **pytest** library for testing.
 
-During test execution, the Telegram bot will send two test messages. The first time, only a markdown-formatted message
-is sent, without any attached documents. The second time, the same message is sent but with an attached file
-`document.txt`.
+During test execution, the Telegram bot will send a series of test messages. These tests cover different scenarios such
+as sending a message with or without an attachment, and with or without an inline button.
 
 ### **Running Tests:**
 
@@ -258,15 +261,20 @@ pytest
 
 ### **Tested Scenarios:**
 
-- Successful message sending:
-    - Text message without attachments.
-    - Text message with an attachment.
-- Errors in sending:
-    - Sending without a token.
-    - Sending with an invalid token.
-    - Sending without `chat_id`.
-    - Sending without `message`.
-    - Sending with an incorrect `chat_id`.
+#### **Successful message sending:**
+
+- Text message without attachments.
+- Text message with an attachment.
+- Text message with an inline button, without an attachment.
+- Text message with an inline button and an attachment.
+
+#### **Errors in sending:**
+
+- Sending without a token.
+- Sending with an invalid token.
+- Sending without `chatID`.
+- Sending without `message`.
+- Sending with an incorrect `chatID`.
 
 ## Running the Application with Docker
 

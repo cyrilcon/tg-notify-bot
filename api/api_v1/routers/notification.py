@@ -7,7 +7,7 @@ from api.api_v1.models import NotificationResponse, NotificationRequest
 from api.api_v1.services import generate_token
 from config import config
 from database import session_manager
-from tg_bot.messaging import send_message
+from tg_bot.bot import BotService
 
 router = APIRouter(tags=[config.api.tags.notification])
 
@@ -29,11 +29,12 @@ async def send_notification(
     """
     Send a notification:
 
-    - `id` (str): The ID of the chat or channel where the message is to be sent.
-    - `message` (str): The body of a message with Markdown_v2 markup.
-    - `documents` (list of Document objects | null)
-        - `buffer` (byte buffer): Attached document.
-        - `name` (str): Document Name.
+    - `chatID` (Integer): ID of the chat or channel where the message will be sent
+    - `message` (String): Message body in Markdown_v2 format
+    - `buttonUrl` (String | Null): Optional URL for an inline button in the message
+    - `documents` (Array of Document objects | Null)
+        - `buffer` (String): File in Base64 format
+        - `name` (String): Document name
     """
     generated_token = generate_token()
     if token != generated_token:
@@ -53,14 +54,15 @@ async def send_notification(
             detail=f"Failed to create notification in the database: {error}",
         )
 
-    success, error = await send_message(
-        notification_in.chat_id,
-        notification_in.message,
-        notification_in.documents,
+    success, error = await BotService.send_message(
+        chat_id=notification_in.chatID,
+        text=notification_in.message,
+        button_url=notification_in.buttonUrl,
+        files=notification_in.documents,
     )
 
     return NotificationResponse(
-        successfully=success,
-        error=error,
-        created_at=notification.created_at,
+        success=success,
+        errorMessage=error,
+        createdAt=notification.created_at,
     )

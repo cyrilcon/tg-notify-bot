@@ -15,6 +15,7 @@ class Notification(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
     chat_id: Mapped[int] = mapped_column(BIGINT, index=True)
     message: Mapped[str] = mapped_column(Text())
+    button_url: Mapped[str | None] = mapped_column(Text(), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         TIMESTAMP(timezone=True),
         server_default=func.now(),
@@ -33,6 +34,7 @@ class Notification(Base, TableNameMixin):
             f"(id={self.id}, "
             f"chat_id={self.chat_id}, "
             f"message={self.message!r}, "
+            f"button_url={self.button_url!r}, "
             f"created_at={self.created_at!r})"
         )
 
