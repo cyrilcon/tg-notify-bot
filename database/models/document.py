@@ -1,4 +1,6 @@
-from sqlalchemy import Text, ForeignKey, LargeBinary
+from typing import List
+
+from sqlalchemy import Text, LargeBinary
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ._base import Base, TableNameMixin
@@ -7,21 +9,19 @@ from .notification import Notification
 
 class Document(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
-    notification_id: Mapped[int] = mapped_column(
-        ForeignKey("notification.id", ondelete="CASCADE"),
-    )
-    buffer: Mapped[bytes] = mapped_column(LargeBinary)
+    buffer: Mapped[bytes] = mapped_column(LargeBinary, index=True)
     name: Mapped[str] = mapped_column(Text(), index=True)
 
-    notification: Mapped["Notification"] = relationship(
+    notifications: Mapped[List["Notification"]] = relationship(
+        secondary="notification_document",
         back_populates="documents",
+        lazy="joined",
     )
 
     def __str__(self):
         return (
             f"{self.__class__.__name__}"
             f"(id={self.id}, "
-            f"notification_id={self.notification_id}, "
             f"buffer={self.buffer!r}, "
             f"name={self.name!r})"
         )

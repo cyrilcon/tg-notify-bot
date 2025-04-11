@@ -4,7 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.api_v1.crud import create_notification
 from api.api_v1.models import NotificationResponse, NotificationRequest
+
 from api.api_v1.services import generate_token
+
 from config import config
 from database import session_manager
 from tg_bot.bot import BotService
