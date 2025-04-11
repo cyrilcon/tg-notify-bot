@@ -93,18 +93,18 @@ def generate_token() -> str:
 
 ## Database Structure
 
-The application uses PostgreSQL and includes two main tables: `Notification` and `Document`, related by a
-_"one-to-many"_ relationship.
+The application uses PostgreSQL and includes three main tables: `notification`, `document`, and `notification_document`,
+which establishes a _many-to-many_ relationship between notifications and documents.
 
-### **Table `Notification`**
+### **Table `notification`**
 
-| Field        | Type                       | Description                                                                                                               |
-|--------------|----------------------------|---------------------------------------------------------------------------------------------------------------------------|
-| `id`         | `Integer`                  | Unique notification identifier                                                                                            |
-| `chat_id`    | `Bigint`                   | ID of the chat or channel where the message will be sent                                                                  |
-| `message`    | `Text`                     | Message body in [Markdown_v2](https://core.telegram.org/bots/api#markdownv2-style) format                                 |
-| `button_url` | `Text` \| `Null`           | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
-| `created_at` | `Timestamp` with time zone | Time of notification sending in ISO 8601 format                                                                           |
+| Field        | Type                     | Description                                                                                                               |
+|--------------|--------------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `id`         | Integer                  | Unique notification identifier                                                                                            |
+| `chat_id`    | Bigint                   | ID of the chat or channel where the message will be sent                                                                  |
+| `message`    | Text                     | Message body in [MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style) format                                  |
+| `button_url` | Text \| Null             | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
+| `created_at` | Timestamp with time zone | Time of notification sending in ISO 8601 format                                                                           |
 
 **ORM Model:**
 
@@ -121,77 +121,102 @@ class Notification(Base, TableNameMixin):
     )
 
     documents: Mapped[List["Document"]] = relationship(
-        back_populates="notification",
-        cascade="all, delete-orphan",
-        lazy="joined",
+        secondary="notification_document",
+        back_populates="notifications",
+        lazy="selectin",
+        cascade="save-update",
     )
 ```
 
-### **Table `Document`**
+### **Table `document`**
 
-| Field             | Type      | Description                       |
-|-------------------|-----------|-----------------------------------|
-| `id`              | `Integer` | Unique document identifier        |
-| `notification_id` | `Integer` | ID of the associated notification |
-| `buffer`          | `Bytea`   | File in Base64 format             |
-| `name`            | `Text`    | Document name                     |
+| Field    | Type    | Description                |
+|----------|---------|----------------------------|
+| `id`     | Integer | Unique document identifier |
+| `buffer` | Bytea   | File in Base64 format      |
+| `name`   | Text    | Document name              |
 
 **ORM Model:**
 
 ```python
 class Document(Base, TableNameMixin):
     id: Mapped[int] = mapped_column(primary_key=True)
-    notification_id: Mapped[int] = mapped_column(
-        ForeignKey("notification.id", ondelete="CASCADE"),
-    )
-    buffer: Mapped[bytes] = mapped_column(LargeBinary)
+    buffer: Mapped[bytes] = mapped_column(LargeBinary, index=True)
     name: Mapped[str] = mapped_column(Text(), index=True)
 
-    notification: Mapped["Notification"] = relationship(
+    notifications: Mapped[List["Notification"]] = relationship(
+        secondary="notification_document",
         back_populates="documents",
+        lazy="joined",
     )
+```
+
+### **Table `notification_document`** (Association Table)
+
+| Field             | Type    | Description                                       |
+|-------------------|---------|---------------------------------------------------|
+| `notification_id` | Integer | Notification reference (CASCADE on delete/update) |
+| `document_id`     | Integer | Document reference (CASCADE on delete/update)     |
+
+**ORM Model:**
+
+```python
+class NotificationDocument(Base, TableNameMixin):
+    notification_id: Mapped[int] = mapped_column(
+        ForeignKey("notification.id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+    )
+    document_id: Mapped[int] = mapped_column(
+        ForeignKey("document.id", ondelete="CASCADE", onupdate="CASCADE"),
+        primary_key=True,
+    )
+
 ```
 
 ## API
 
-### **Notify**
+### **Send a notification**
 
 ```
-POST /api/v1/notify
+POST /api/v1/notification
 ```
 
 - **Method:** `POST`
-- **Endpoint:** `/api/v1/notify`
-- **Description:** Sends a message with the ability to attach documents.
+- **Endpoint:** `/api/v1/notification`
+- **Description:** Sends a notification to the specified chat IDs, which can include a message, optional button, and
+  optional documents.
 
 ### **Request Headers:**
 
-| Header        | Type     | Description |
-|---------------|----------|-------------|
-| Authorization | `String` | API key     |
+| Header        | Type   | Description                |
+|---------------|--------|----------------------------|
+| Authorization | String | API key for authentication |
 
 ### **Request Parameters:**
 
-| Field       | Type               | Description                                                                                                               |
-|-------------|--------------------|---------------------------------------------------------------------------------------------------------------------------|
-| `chatID`    | `Integer`          | ID of the chat or channel where the message will be sent                                                                  |
-| `message`   | `String`           | Message body in [Markdown_v2](https://core.telegram.org/bots/api#markdownv2-style) format                                 |
-| `buttonUrl` | `String` \| `Null` | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
-| `documents` | `Array` \| `Null`  | _(Optional)_ List of attached documents                                                                                   |
+| Field       | Type              | Description                                                                                                               |
+|-------------|-------------------|---------------------------------------------------------------------------------------------------------------------------|
+| `chatIds`   | Array of integers | List of chat or channel IDs where the message will be sent                                                                |
+| `message`   | String            | Message body in [MarkdownV2](https://core.telegram.org/bots/api#markdownv2-style) format                                  |
+| `buttonUrl` | String \| Null    | _(Optional)_ URL for an inline button in the message. If provided, the message will include a button linking to this URL. |
+| `documents` | Array \| Null     | _(Optional)_ List of attached documents                                                                                   |
 
 **Description of `document` object:**
 
-| Field    | Type     | Description           |
-|----------|----------|-----------------------|
-| `buffer` | `String` | File in Base64 format |
-| `name`   | `String` | Document name         |
+| Field    | Type   | Description           |
+|----------|--------|-----------------------|
+| `buffer` | String | File in Base64 format |
+| `name`   | String | Document name         |
 
 ### **Example Request:**
 
 ```json
 {
-  "chatID": 123456789,
-  "message": "Hello, this is a message with *markdown* formatting.",
+  "chatIds": [
+    123456789,
+    987654321
+  ],
+  "message": "Hello, this is a message with *markdown* formatting",
   "buttonUrl": "https://example.com",
   "documents": [
     {
@@ -208,28 +233,30 @@ POST /api/v1/notify
 
 ### **Response:**
 
-| Field          | Type                | Description                                             |
-|----------------|---------------------|---------------------------------------------------------|
-| `success`      | `Boolean`           | `true` if the message was sent successfully             |
-| `errorMessage` | `String`  \| `Null` | Error message if something went wrong, otherwise `null` |
-| `createdAt`    | `String`            | Time of notification sending in ISO 8601 format         |
+| Field       | Type   | Description                                     |
+|-------------|--------|-------------------------------------------------|
+| `createdAt` | String | Time of notification sending in ISO 8601 format |
 
-**Example Successful Response:**
+**Example Response:**
 
 ```json
 {
-  "success": true,
-  "errorMessage": null,
-  "createdAt": "2024-06-06T12:00:02Z"
-}
-```
-
-**Example Error Response:**
-
-```json
-{
-  "success": false,
-  "errorMessage": "Error message explaining what went wrong",
+  "chatIds": [
+    123456789,
+    987654321
+  ],
+  "message": "Hello, this is a message with *markdown* formatting",
+  "buttonUrl": "https://example.com",
+  "documents": [
+    {
+      "buffer": "SGVsbG8gd29ybGQ=",
+      "name": "Document 1.pdf"
+    },
+    {
+      "buffer": "U29tZSBuZXcgZGF0YQ==",
+      "name": "Document 2.pdf"
+    }
+  ],
   "createdAt": "2024-06-06T12:00:02Z"
 }
 ```
@@ -239,9 +266,10 @@ POST /api/v1/notify
 | Code                        | Description               |
 |-----------------------------|---------------------------|
 | `201 Created`               | Message successfully sent |
-| `403 Forbidden`             | Invalid token             |
-| `422 Unprocessable Entity`  | Invalid data format       |
+| `403 Forbidden`             | Invalid or missing token  |
+| `422 Unprocessable Entity`  | Validation error          |
 | `500 Internal Server Error` | Server error              |
+| `502 Bad Gateway`           | Upstream server error     |
 
 ## Application Testing
 
@@ -261,20 +289,21 @@ pytest
 
 ### **Tested Scenarios:**
 
-#### **Successful message sending:**
+#### **✅ Successful message sending:**
 
 - Text message without attachments.
 - Text message with an attachment.
 - Text message with an inline button, without an attachment.
 - Text message with an inline button and an attachment.
 
-#### **Errors in sending:**
+#### **❌ Errors in sending:**
 
-- Sending without a token.
-- Sending with an invalid token.
-- Sending without `chatID`.
-- Sending without `message`.
-- Sending with an incorrect `chatID`.
+- Sending without an authentication token.
+- Sending with an invalid authentication token.
+- Sending without `chatIds` field.
+- Sending with an empty `chatIds` list.
+- Sending with an invalid `chatIds` value (e.g., wrong type or format).
+- Sending without `message` field.
 
 ## Running the Application with Docker
 

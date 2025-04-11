@@ -23,9 +23,10 @@ class Notification(Base, TableNameMixin):
     )
 
     documents: Mapped[List["Document"]] = relationship(
-        back_populates="notification",
-        cascade="all, delete-orphan",
-        lazy="joined",
+        secondary="notification_document",
+        back_populates="notifications",
+        lazy="selectin",
+        cascade="save-update",
     )
 
     def __str__(self):

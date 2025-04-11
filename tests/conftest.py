@@ -1,10 +1,5 @@
 __all__ = (
     "client",
-    "file_data",
-    "base_data",
-    "data_with_button",
-    "data_with_file",
-    "data_with_button_and_file",
     "setup_database",
     "db_session",
     "event_loop",
@@ -16,11 +11,6 @@ import pytest_asyncio
 
 from fixtures import (
     client,
-    file_data,
-    base_data,
-    data_with_button,
-    data_with_file,
-    data_with_button_and_file,
     setup_database,
     db_session,
 )

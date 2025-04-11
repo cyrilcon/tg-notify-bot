@@ -1,4 +1,4 @@
-from typing import List, Tuple
+from typing import List
 
 from aiogram import Bot
 from aiogram.client.default import DefaultBotProperties
@@ -22,25 +22,26 @@ class BotService:
         text: str,
         button_url: str | None = None,
         files: List[Document] = None,
-    ) -> Tuple[bool, str | None]:
+    ) -> None:
         """
-        Send files with a caption in one message (album).
+        Send a message.
 
         :param chat_id: Telegram chat id.
         :param text: Text to send.
         :param button_url: Optional URL for an inline button in the message.
         :param files: List of files to send.
-        :return: True if successful, otherwise False and an error message.
         """
-        try:
-            reply_markup = None
-            if button_url:
-                reply_markup = InlineKeyboardMarkup(
-                    inline_keyboard=[
-                        [InlineKeyboardButton(text="Open Link", url=button_url)]
-                    ]
-                )
+        reply_markup = (
+            InlineKeyboardMarkup(
+                inline_keyboard=[
+                    [InlineKeyboardButton(text="Open Link", url=button_url)]
+                ]
+            )
+            if button_url
+            else None
+        )
 
+        try:
             if files:
                 await BotService.send_files(
                     chat_id=chat_id,
@@ -54,9 +55,8 @@ class BotService:
                     text=text,
                     reply_markup=reply_markup,
                 )
-            return True, None
         except Exception as e:
-            return False, str(e)
+            raise Exception(f"Failed to send message to {chat_id}: {e}")
 
     @staticmethod
     async def send_files(
