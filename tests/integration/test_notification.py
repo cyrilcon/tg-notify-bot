@@ -7,7 +7,7 @@ from httpx import AsyncClient
 from api.api_v1.services import generate_token
 from config import config
 
-PREFIX = config.api.prefix + config.api.v1.prefix + "/notification"
+PREFIX = config.api.prefix + config.api.v1.prefix + "/notifications"
 
 CHAT_IDS = [config.test_chat_id]
 FILE_PATH = Path("tests/document.txt")

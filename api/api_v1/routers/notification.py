@@ -17,13 +17,13 @@ api_key_header = APIKeyHeader(name="Authorization")
 
 
 @router.post(
-    "/notification",
+    "/notifications",
     response_model=NotificationResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Send a notification",
     response_description="Notification was sent",
 )
-async def post_notification(
+async def post_notifications(
     notification_request: NotificationRequest,
     token: str = Security(api_key_header),
     session: AsyncSession = Depends(session_manager.session_getter),
