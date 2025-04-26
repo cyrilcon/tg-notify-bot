@@ -178,11 +178,11 @@ class NotificationDocument(Base, TableNameMixin):
 ### **Send a notification**
 
 ```
-POST /api/v1/notification
+POST /api/v1/notifications
 ```
 
 - **Method:** `POST`
-- **Endpoint:** `/api/v1/notification`
+- **Endpoint:** `/api/v1/notifications`
 - **Description:** Sends a notification to the specified chat IDs, which can include a message, optional button, and
   optional documents.
 
